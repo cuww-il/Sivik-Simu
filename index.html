@@ -1,366 +1,629 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sivik Galaxy Plus — Симулятор балансировочного станка</title>
-<style>
-  :root{
-    --bg:#0d1b2a;
-    --panel:#111827;
-    --accent:#0ea5a4;
-    --neon-red:#ff3b30;
-    --neon-green:#39ff14;
-    --glass: rgba(255,255,255,0.04);
-    --muted:#9aa7b2;
-  }
-  html,body{height:100%;margin:0;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;background:linear-gradient(180deg,var(--bg), #07101a);color:#dbe7ef;overflow:hidden;}
-  
-  .app{
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:28px;
-    box-sizing:border-box;
-  }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sivik Galaxy Plus — Симулятор балансировочного станка</title>
+  <style>
+    /* ----- Общие стили ----- */
+    :root {
+      --bg: #0d1b2a;
+      --panel: #111827;
+      --accent: #0ea5a4;
+      --neon-red: #ff3b30;
+      --neon-green: #39ff14;
+      --muted: #9aa7b2;
+    }
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      background: linear-gradient(180deg, var(--bg), #07101a);
+      color: #dbe7ef;
+      overflow: hidden;
+    }
+    .app {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      box-sizing: border-box;
+    }
 
-  /* Стартовая панель для обхода блокировки звука */
-  #overlay {
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background: rgba(7, 16, 26, 0.95);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .start-card {
-    background: var(--panel);
-    border: 1px solid var(--accent);
-    padding: 40px;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  }
-  .start-btn {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    padding: 15px 35px;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .start-btn:hover { transform: scale(1.05); }
+    /* ----- Стартовый оверлей ----- */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(7, 16, 26, 0.95);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .start-card {
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      padding: 40px 50px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .start-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 15px 35px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .start-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 20px rgba(14, 165, 164, 0.4);
+    }
 
-  /* Main frame */
-  .machine{
-    width:100%;
-    max-width:1100px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:14px;
-    padding:22px;
-    box-shadow: 0 10px 40px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
-    border:1px solid rgba(255,255,255,0.03);
-    display:grid;
-    grid-template-columns: 260px 1fr 260px;
-    gap:18px;
-    align-items:start;
-  }
+    /* ----- Основная сетка станка ----- */
+    .machine {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 10px 40px rgba(2, 6, 23, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      display: grid;
+      grid-template-columns: 240px 1fr 240px;
+      gap: 18px;
+      align-items: start;
+    }
+    .side {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+    .display {
+      width: 100%;
+      background: linear-gradient(180deg, #071826, #07121a);
+      border-radius: 8px;
+      padding: 12px 8px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 -6px 18px rgba(255, 255, 255, 0.02);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .display .label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .digits {
+      font-family: 'Courier New', monospace;
+      font-size: 40px;
+      line-height: 1.2;
+      color: var(--neon-red);
+      text-shadow: 0 0 8px rgba(255, 59, 48, 0.25), 0 0 18px rgba(255, 59, 48, 0.12);
+      background: rgba(255, 255, 255, 0.02);
+      padding: 4px 12px;
+      border-radius: 6px;
+      min-width: 80px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .digits.ok {
+      color: var(--neon-green);
+      text-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+    }
 
-  .side{
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:10px;
-    padding:14px;
-    box-shadow: 0 6px 18px rgba(2,6,23,0.6);
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    align-items:center;
-  }
+    /* Шкала */
+    .scale-bar {
+      width: 18px;
+      height: 100px;
+      background: #050b11;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .scale-fill {
+      width: 100%;
+      height: 0%;
+      background: var(--neon-red);
+      position: absolute;
+      bottom: 0;
+      transition: height 0.25s ease, background 0.25s;
+    }
+    .scale-fill.ok {
+      background: var(--neon-green);
+    }
 
-  .display{
-    width:100%;
-    background:linear-gradient(180deg,#071826, #07121a);
-    border-radius:8px;
-    padding:12px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.6), inset 0 -6px 18px rgba(255,255,255,0.02);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:8px;
-  }
+    /* ----- Центр: колесо ----- */
+    .center-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .center-zone .title {
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--accent);
+      letter-spacing: 2px;
+    }
+    .wheel-wrapper {
+      perspective: 800px;
+      margin: 10px 0;
+    }
+    .wheel-3d {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #334155 10%, #1e293b 40%, #0f172a 70%);
+      border: 12px solid #475569;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.9);
+      transform: rotateX(20deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .wheel-3d::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 4px dashed rgba(255, 255, 255, 0.07);
+    }
+    .wheel-3d .brand {
+      color: #94a3b8;
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 3px;
+      z-index: 2;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+    .spinning {
+      animation: spin 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes spin {
+      0% {
+        transform: rotateX(20deg) rotate(0deg);
+      }
+      100% {
+        transform: rotateX(20deg) rotate(360deg);
+      }
+    }
 
-  .display .label{font-size:13px;color:var(--muted);letter-spacing:1px}
-  
-  .digits{
-    font-family: "Courier New", Courier, monospace;
-    font-size:44px;
-    line-height:1;
-    color:var(--neon-red);
-    text-shadow: 0 0 8px rgba(255,59,48,0.25), 0 0 18px rgba(255,59,48,0.12), 0 6px 20px rgba(0,0,0,0.6);
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    padding:8px 14px;
-    border-radius:6px;
-    min-width:120px;
-    text-align:center;
-    box-sizing:border-box;
-    border:1px solid rgba(255,255,255,0.02);
-  }
-  .digits.ok{
-    color:var(--neon-green);
-    text-shadow: 0 0 10px rgba(57,255,20,0.4);
-  }
+    /* Зоны для сброса грузиков */
+    .drop-targets {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .drop-zone {
+      width: 80px;
+      height: 100%;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px dashed rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      transition: background 0.2s, border-color 0.2s;
+      padding: 4px;
+      box-sizing: border-box;
+      gap: 4px;
+    }
+    .drop-zone.hovered {
+      background: rgba(14, 165, 164, 0.15);
+      border-color: var(--accent);
+    }
+    .placed-weight {
+      background: #475569;
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #94a3b8;
+      font-weight: bold;
+      width: 100%;
+      text-align: center;
+      box-sizing: border-box;
+    }
 
-  /* Шкала докрутки */
-  .scale-bar {
-    width: 20px;
-    height: 120px;
-    background: #050b11;
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .scale-fill {
-    width: 100%;
-    height: 0%;
-    background: var(--neon-red);
-    position: absolute;
-    bottom: 0;
-    transition: height 0.2s, background 0.2s;
-  }
-  .scale-fill.ok { background: var(--neon-green); }
+    /* Кнопка "Следующее измерение" */
+    .action-btn {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.15s;
+      display: none;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+    }
+    .action-btn:hover {
+      background: #15803d;
+      transform: scale(1.02);
+    }
+    .action-btn.visible {
+      display: inline-block;
+    }
 
-  /* Центральная зона с 3D колесом */
-  .center-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    height: 100%;
-  }
+    /* ----- Нижняя панель с грузами ----- */
+    .bottom-panel {
+      grid-column: 1 / span 3;
+      background: var(--panel);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 16px 20px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .weight-card {
+      background: linear-gradient(135deg, #475569, #334155);
+      border: 1px solid #64748b;
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .weight-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    }
+    .weight-card:active {
+      cursor: grabbing;
+    }
 
-  .wheel-wrapper {
-    perspective: 800px;
-    margin: 20px 0;
-  }
-
-  .wheel-3d {
-    width: 240px;
-    height: 240px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #334155 10%, #1e293b 40%, #0f172a 70%);
-    border: 14px solid #475569;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.9);
-    transform: rotateX(20deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  /* Протекторы шины (псевдо-3D насечки) */
-  .wheel-3d::before {
-    content: '';
-    position: absolute;
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    border: 4px dashed rgba(255,255,255,0.07);
-  }
-
-  .spinning {
-    animation: spin 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotateX(20deg) rotate(0deg); }
-    100% { transform: rotateX(20deg) rotate(360deg); }
-  }
-
-  /* Зоны сброса грузиков поверх колеса */
-  .drop-targets {
-    position: absolute;
-    width: 100%; height: 100%;
-    top:0; left:0;
-    display: flex;
-    justify-content: space-between;
-    pointer-events: none;
-  }
-  .drop-zone {
-    width: 100px; height: 100%;
-    pointer-events: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border: 2px dashed rgba(255,255,255,0.05);
-    border-radius: 8px;
-    transition: background 0.2s;
-  }
-  .drop-zone.hovered {
-    background: rgba(14, 165, 164, 0.15);
-    border-color: var(--accent);
-  }
-
-  /* Нижний контейнер с грузами */
-  .bottom-panel {
-    grid-column: 1 / span 3;
-    background: var(--panel);
-    border-top: 1px solid rgba(255,255,255,0.05);
-    padding: 16px;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-  }
-
-  .weight-card {
-    background: linear-gradient(135deg, #475569, #334155);
-    border: 1px solid #64748b;
-    color: #fff;
-    padding: 12px 24px;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: grab;
-    user-select: none;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-  }
-  .weight-card:active { cursor: grabbing; }
-
-  .placed-weight {
-    background: #64748b;
-    color: #fff;
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 3px;
-    margin-top: 4px;
-    border: 1px solid #cbd5e1;
-  }
-
-  .action-btn {
-    background: #16a34a;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 15px;
-    display: none;
-  }
-</style>
+    /* Адаптив */
+    @media (max-width: 800px) {
+      .machine {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .bottom-panel {
+        grid-column: 1;
+      }
+      .wheel-3d {
+        width: 170px;
+        height: 170px;
+        border-width: 10px;
+      }
+      .digits {
+        font-size: 30px;
+        min-width: 60px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<!-- Экран приветствия -->
-<div id="overlay">
-  <div class="start-card">
-    <h1 style="margin-top:0;">Sivik Galaxy Plus</h1>
-    <p style="color:var(--muted); margin-bottom:25px;">Нажмите кнопку для загрузки операционной системы станка</p>
-    <button class="start-btn" onclick="bootMachine()">Запустить станок</button>
-  </div>
-</div>
-
-<div class="app">
-  <div class="machine">
-    
-    <!-- Слева -->
-    <div class="side">
-      <div class="display">
-        <span class="label">ВНУТРЕННЯЯ (ЛЕВАЯ)</span>
-        <div id="left-val" class="digits">0</div>
-      </div>
-      <div class="scale-bar"><div id="left-scale" class="scale-fill"></div></div>
+  <!-- Стартовый экран -->
+  <div id="overlay">
+    <div class="start-card">
+      <h1 style="margin-top:0; color:var(--accent);">Sivik Galaxy Plus</h1>
+      <p style="color:var(--muted); margin-bottom:25px;">Нажмите кнопку для загрузки ОС станка</p>
+      <button class="start-btn" id="bootBtn">Запустить станок</button>
     </div>
+  </div>
 
-    <!-- Центр -->
-    <div class="center-zone">
-      <div style="font-size: 18px; font-weight: bold; color: var(--accent);">DIAGNOSTIC MODE</div>
-      <div class="wheel-wrapper">
-        <div id="wheel" class="wheel-3d">
-          <div style="color: #64748b; font-weight: bold; font-size: 20px; letter-spacing: 2px;">SIVIK</div>
-          <div class="drop-targets">
-            <div class="drop-zone" id="zone-left" data-side="left"></div>
-            <div class="drop-zone" id="zone-right" data-side="right"></div>
-          </div>
+  <!-- Основное приложение -->
+  <div class="app">
+    <div class="machine">
+
+      <!-- Левая панель -->
+      <div class="side">
+        <div class="display">
+          <span class="label">ВНУТРЕННЯЯ (ЛЕВАЯ)</span>
+          <div id="left-val" class="digits">0</div>
+        </div>
+        <div class="scale-bar">
+          <div id="left-scale" class="scale-fill"></div>
         </div>
       </div>
-      <button id="btn-next" class="action-btn" onclick="startMeasurement()">Следующее измерение</button>
-    </div>
 
-    <!-- Справа -->
-    <div class="side">
-      <div class="display">
-        <span class="label">ВНЕШНЯЯ (ПРАВАЯ)</span>
-        <div id="right-val" class="digits">0</div>
+      <!-- Центр -->
+      <div class="center-zone">
+        <div class="title">⚙ DIAGNOSTIC MODE</div>
+        <div class="wheel-wrapper">
+          <div id="wheel" class="wheel-3d">
+            <span class="brand">SIVIK</span>
+            <div class="drop-targets">
+              <div class="drop-zone" id="zone-left" data-side="left"></div>
+              <div class="drop-zone" id="zone-right" data-side="right"></div>
+            </div>
+          </div>
+        </div>
+        <button id="btn-next" class="action-btn">Следующее измерение</button>
       </div>
-      <div class="scale-bar"><div id="right-scale" class="scale-fill"></div></div>
-    </div>
 
-    <!-- Грузики -->
-    <div class="bottom-panel">
-      <div class="weight-card" draggable="true" data-weight="5">5 г</div>
-      <div class="weight-card" draggable="true" data-weight="10">10 г</div>
-      <div class="weight-card" draggable="true" data-weight="15">15 г</div>
-      <div class="weight-card" draggable="true" data-weight="30">30 г</div>
-    </div>
+      <!-- Правая панель -->
+      <div class="side">
+        <div class="display">
+          <span class="label">ВНЕШНЯЯ (ПРАВАЯ)</span>
+          <div id="right-val" class="digits">0</div>
+        </div>
+        <div class="scale-bar">
+          <div id="right-scale" class="scale-fill"></div>
+        </div>
+      </div>
 
+      <!-- Грузики -->
+      <div class="bottom-panel">
+        <div class="weight-card" draggable="true" data-weight="5">5 г</div>
+        <div class="weight-card" draggable="true" data-weight="10">10 г</div>
+        <div class="weight-card" draggable="true" data-weight="15">15 г</div>
+        <div class="weight-card" draggable="true" data-weight="30">30 г</div>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<script>
-  const weightOptions =;
-  let targetLeft = 0, targetRight = 0;
-  let currentLeft = 0, currentRight = 0;
-  let draggedWeight = 0;
+  <script>
+    (function() {
+      'use strict';
 
-  // Суровый мужской голос Sivik (низкий pitch)
-  function speakSivik(text) {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Стопаем прошлую фразу
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ru-RU';
-      utterance.pitch = 0.55; // Делаем голос грубым и низким
-      utterance.rate = 0.85;  // Немного замедляем для брутальности
-      window.speechSynthesis.speak(utterance);
-    }
-  }
+      // ----- Конфигурация -----
+      const weightOptions = [5, 10, 15, 20, 25, 30, 35, 40];
 
-  function bootMachine() {
-    document.getElementById('overlay').style.display = 'none';
-    startMeasurement();
-  }
+      // ----- DOM-ссылки -----
+      const overlay = document.getElementById('overlay');
+      const bootBtn = document.getElementById('bootBtn');
 
-  function startMeasurement() {
-    document.getElementById('btn-next').style.display = 'none';
-    document.querySelectorAll('.placed-weight').forEach(w => w.remove());
-    
-    // Сброс значений
-    currentLeft = 0; currentRight = 0;
-    
-    // Визуальное вращение колеса
-    const wheel = document.getElementById('wheel');
-    wheel.classList.add('spinning');
-    
-    speakSivik("Идёт измерение");
+      const leftValEl = document.getElementById('left-val');
+      const rightValEl = document.getElementById('right-val');
+      const leftScale = document.getElementById('left-scale');
+      const rightScale = document.getElementById('right-scale');
+      const wheel = document.getElementById('wheel');
+      const btnNext = document.getElementById('btn-next');
 
-    setTimeout(() => {
-      wheel.classList.remove('spinning');
-      
-      targetLeft = weightOptions[Math.floor(Math.random() * weightOptions.length)];
-      targetRight = weightOptions[Math.floor(Math.random() * weightOptions.length)];
-      
-      updateInterface();
-      generateVoiceReport();
-    }, 2000);
-  }
+      const zoneLeft = document.getElementById('zone-left');
+      const zoneRight = document.getElementById('zone-right');
+      const weightCards = document.querySelectorAll('.weight-card');
 
-  function generateVoiceReport() {
-    let report = "";
-    if (targetLeft === 0) report += "С левой стороны в норме. ";
-else report += С левой стороны ${targetLeft} грамм. ;if (targetRight === 0) report += "С правой стороны в норме.";else report += С правой стороны ${targetRight} грамм.;speakSivik(report);}function updateInterface() {// Левая сторонаconst leftDiff = targetLeft - currentLeft;const leftValEl = document.getElementById('left-val');const leftScale = document.getElementById('left-scale');if (leftDiff <= 0) {leftValEl.textContent = "0";leftValEl.classList.add('ok');leftScale.style.height = "100%";leftScale.classList.add('ok');} else {leftValEl.textContent = leftDiff;leftValEl.classList.remove('ok');leftScale.style.height = ${Math.min(100, (currentLeft / targetLeft) * 100)}%;leftScale.classList.remove('ok');}// Правая сторонаconst rightDiff = targetRight - currentRight;const rightValEl = document.getElementById('right-val');const rightScale = document.getElementById('right-scale');if (rightDiff <= 0) {rightValEl.textContent = "0";rightValEl.classList.add('ok');rightScale.style.height = "100%";rightScale.classList.add('ok');} else {rightValEl.textContent = rightDiff;rightValEl.classList.remove('ok');rightScale.style.height = ${Math.min(100, (currentRight / targetRight) * 100)}%;rightScale.classList.remove('ok');}// Проверка финалаif (leftDiff <= 0 && rightDiff <= 0) {speakSivik("Колесо отбалансировано");document.getElementById('btn-next').style.display = 'block';}}// Drag and Drop логикаdocument.querySelectorAll('.weight-card').forEach(card => {card.addEventListener('dragstart', (e) => {draggedWeight = parseInt(e.target.getAttribute('data-weight'));});});document.querySelectorAll('.drop-zone').forEach(zone => {zone.addEventListener('dragover', (e) => {e.preventDefault();zone.classList.add('hovered');});zone.addEventListener('dragleave', () => zone.classList.remove('hovered'));zone.addEventListener('drop', (e) => {e.preventDefault();zone.classList.remove('hovered');const side = zone.getAttribute('data-side');if (side === 'left') currentLeft += draggedWeight;else currentRight += draggedWeight;// Отрисовка грузика на колесеconst wEl = document.createElement('div');wEl.className = 'placed-weight';wEl.textContent = ${draggedWeight}g;zone.appendChild(wEl);updateInterface();});});
+      // ----- Состояние -----
+      let targetLeft = 0;
+      let targetRight = 0;
+      let currentLeft = 0;
+      let currentRight = 0;
+      let draggedWeight = 0;
+      let isMeasuring = false; // блокировка во время измерения
+
+      // ----- Голосовой движок -----
+      function speakSivik(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ru-RU';
+        utterance.pitch = 0.55;
+        utterance.rate = 0.85;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // ----- Обновление интерфейса -----
+      function updateInterface() {
+        const leftDiff = Math.max(0, targetLeft - currentLeft);
+        const rightDiff = Math.max(0, targetRight - currentRight);
+
+        // Левая
+        if (leftDiff === 0) {
+          leftValEl.textContent = '0';
+          leftValEl.classList.add('ok');
+          leftScale.style.height = '100%';
+          leftScale.classList.add('ok');
+        } else {
+          leftValEl.textContent = leftDiff;
+          leftValEl.classList.remove('ok');
+          const pct = Math.min(100, ((targetLeft - currentLeft) / targetLeft) * 100);
+          leftScale.style.height = pct + '%';
+          leftScale.classList.remove('ok');
+        }
+
+        // Правая
+        if (rightDiff === 0) {
+          rightValEl.textContent = '0';
+          rightValEl.classList.add('ok');
+          rightScale.style.height = '100%';
+          rightScale.classList.add('ok');
+        } else {
+          rightValEl.textContent = rightDiff;
+          rightValEl.classList.remove('ok');
+          const pct = Math.min(100, ((targetRight - currentRight) / targetRight) * 100);
+          rightScale.style.height = pct + '%';
+          rightScale.classList.remove('ok');
+        }
+
+        // Проверка баланса
+        const balanced = (leftDiff === 0 && rightDiff === 0);
+        if (balanced && !isMeasuring) {
+          speakSivik('Колесо отбалансировано');
+          btnNext.classList.add('visible');
+        } else {
+          btnNext.classList.remove('visible');
+        }
+      }
+
+      // ----- Голосовой отчёт -----
+      function generateVoiceReport() {
+        let report = '';
+        if (targetLeft === 0) {
+          report += 'С левой стороны в норме. ';
+        } else {
+          report += 'С левой стороны ' + targetLeft + ' грамм. ';
+        }
+        if (targetRight === 0) {
+          report += 'С правой стороны в норме.';
+        } else {
+          report += 'С правой стороны ' + targetRight + ' грамм.';
+        }
+        speakSivik(report);
+      }
+
+      // ----- Запуск измерения -----
+      function startMeasurement() {
+        if (isMeasuring) return;
+        isMeasuring = true;
+
+        // Сбрасываем грузики на колесе
+        document.querySelectorAll('.placed-weight').forEach(el => el.remove());
+
+        // Сброс накопленных значений
+        currentLeft = 0;
+        currentRight = 0;
+
+        // Вращение колеса
+        wheel.classList.add('spinning');
+
+        // Голос
+        speakSivik('Идёт измерение');
+
+        // Симуляция измерения
+        setTimeout(() => {
+          wheel.classList.remove('spinning');
+
+          // Генерируем случайные цели (от 0 до 40, с шагом 5)
+          const opts = [0, 5, 10, 15, 20, 25, 30, 35, 40];
+          targetLeft = opts[Math.floor(Math.random() * opts.length)];
+          targetRight = opts[Math.floor(Math.random() * opts.length)];
+
+          // Обновляем интерфейс
+          updateInterface();
+          generateVoiceReport();
+          isMeasuring = false;
+        }, 2000);
+      }
+
+      // ----- Обработчики событий -----
+
+      // 1. Запуск по кнопке "Запустить станок"
+      bootBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        overlay.style.display = 'none';
+        startMeasurement();
+      });
+
+      // 2. Кнопка "Следующее измерение"
+      btnNext.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!isMeasuring) {
+          startMeasurement();
+        }
+      });
+
+      // 3. Drag & Drop для грузиков
+      weightCards.forEach(card => {
+        card.addEventListener('dragstart', function(e) {
+          draggedWeight = parseInt(this.getAttribute('data-weight'), 10);
+          e.dataTransfer.setData('text/plain', String(draggedWeight));
+        });
+      });
+
+      // Зоны сброса
+      function setupDropZone(zone, side) {
+        zone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          this.classList.add('hovered');
+        });
+
+        zone.addEventListener('dragleave', function(e) {
+          this.classList.remove('hovered');
+        });
+
+        zone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          this.classList.remove('hovered');
+
+          // Не даём добавлять грузы во время измерения или если колесо уже сбалансировано
+          if (isMeasuring) {
+            speakSivik('Подождите, идёт измерение');
+            return;
+          }
+
+          // Получаем вес
+          const weight = parseInt(e.dataTransfer.getData('text/plain'), 10);
+          if (isNaN(weight) || weight <= 0) return;
+
+          // Проверяем, не перевесили ли мы
+          if (side === 'left') {
+            if (currentLeft + weight > targetLeft && targetLeft > 0) {
+              speakSivik('Слишком много');
+              return;
+            }
+            currentLeft += weight;
+          } else {
+            if (currentRight + weight > targetRight && targetRight > 0) {
+              speakSivik('Слишком много');
+              return;
+            }
+            currentRight += weight;
+          }
+
+          // Отображаем грузик на колесе
+          const wEl = document.createElement('div');
+          wEl.className = 'placed-weight';
+          wEl.textContent = weight + 'г';
+          zone.appendChild(wEl);
+
+          // Обновляем интерфейс
+          updateInterface();
+        });
+      }
+
+      setupDropZone(zoneLeft, 'left');
+      setupDropZone(zoneRight, 'right');
+
+      // 4. Отмена стандартного поведения для всей страницы (чтобы drop работал)
+      document.addEventListener('dragover', function(e) {
+        e.preventDefault();
+      });
+      document.addEventListener('drop', function(e) {
+        e.preventDefault();
+      });
+
+      // 5. Небольшой хак: если потеряли фокус, убираем подсветку зон
+      document.addEventListener('dragend', function() {
+        document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('hovered'));
+      });
+
+      // Инициализация: скрываем кнопку "Следующее"
+      btnNext.classList.remove('visible');
+
+      console.log('Sivik Galaxy Plus загружен');
+    })();
+  </script>
+</body>
+</html>
