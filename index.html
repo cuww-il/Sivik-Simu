@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор балансировки Sivik Galaxy Plus</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b1528; /* Фирменный глубокий синий Sivik */
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #game-container {
+            text-align: center;
+            background: #112240;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid #1e3a8a;
+        }
+
+        .screen {
+            background-color: #000;
+            border: 4px solid #3b82f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            justify-content: space-around;
+            width: 350px;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .side-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .weight-needed {
+            font-size: 42px;
+            font-weight: bold;
+            color: #ef4444;
+            font-family: 'Courier New', Courier, monospace; /* Имитация LED-экрана */
+        }
+
+        .weight-needed.success {
+            color: #10b981;
+        }
+
+        #wheel-zone {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 550px;
+            height: 300px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .drop-zone {
+            width: 140px;
+            height: 100%;
+            border: 2px dashed #3b82f6;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .drop-zone.hovered {
+            background-color: rgba(59, 130, 246, 0.2);
+            border-color: #60a5fa;
+        }
+
+        #wheel-image {
+            width: 200px;
+            height: 200px;
+            border: 12px solid #475569;
+            border-radius: 50%;
+            background: radial-gradient(circle, #334155 40%, #0f172a 70%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #94a3b8;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
+        }
+
+        #weights-panel {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+        }
+
+        .weight-item {
+            width: 65px;
+            height: 45px;
+            background-color: #94a3b8;
+            border: 2px solid #cbd5e1;
+            color: #0f172a;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            border-radius: 5px;
+            user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .weight-item:active {
+            cursor: grabbing;
+        }
+
+        .placed-weight {
+            width: 55px;
+            height: 35px;
+            background-color: #64748b;
+            border: 1px solid #94a3b8;
+            color: #fff;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5px;
+            border-radius: 3px;
+            animation: apper 0.2s ease;
+        }
+
+        @keyframes apper {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+
+        #btn-start {
+            background-color: #3b82f6;
+        }
+        #btn-start:hover { background-color: #2563eb; }
+
+        #btn-next {
+            background-color: #10b981;
+            display: none;
+            margin-top: 20px;
+        }
+        #btn-next:hover { background-color: #059669; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h2>Симулятор Sivik Galaxy Plus</h2>
+    
+    <!-- Кнопка запуска (Браузеры требуют клика перед тем как включить звук) -->
+    <button id="btn-start" class="btn" onclick="initGame()">Запустить станок</button>
+
+    <div id="main-interface" style="display: none;">
+        <!-- Экран станка -->
+        <div class="screen">
+            <div class="side-info">
+                <span>ЛЕВАЯ</span>
+                <span id="left-display" class="weight-needed">0</span>
+            </div>
+            <div class="side-info">
+                <span>ПРАВАЯ</span>
+                <span id="right-display" class="weight-needed">0</span>
+            </div>
+        </div>
+
+        <!-- Рабочая зона -->
+        <div id="wheel-zone">
+            <div id="left-zone" class="drop-zone" data-side="left">Внутренняя</div>
+            <div id="wheel-image">КОЛЕСО</div>
+            <div id="right-zone" class="drop-zone" data-side="right">Внешняя</div>
+        </div>
+
+        <!-- Панель грузиков -->
+        <div id="weights-panel">
+            <div class="weight-item" draggable="true" data-weight="5">5г</div>
+            <div class="weight-item" draggable="true" data-weight="10">10г</div>
+            <div class="weight-item" draggable="true" data-weight="15">15г</div>
+            <div class="weight-item" draggable="true" data-weight="30">30г</div>
+        </div>
+
+        <button id="btn-next" class="btn" onclick="startNewRound()">Следующее колесо</button>
+    </div>
+</div>
+
+<script>
+    const weightOptions =;
+    
+    let targetLeft = 0, targetRight = 0;
+    let currentLeft = 0, currentRight = 0;
+
+    const leftDisplay = document.getElementById('left-display');
+    const rightDisplay = document.getElementById('right-display');
+    const nextButton = document.getElementById('btn-next');
+
+    // Функция генерации голоса
+    function speakSivik(text) {
+        if ('speechSynthesis' in window) {
+            // Отменяем прошлую речь, если она еще идет
+            window.speechSynthesis.cancel(); 
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ru-RU';
+            utterance.pitch = 0.7; // Понижаем тембр для более грубого мужского голоса
+            utterance.rate = 1.0;  // Скорость речи
+            
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function initGame() {
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('main-interface').style.display = 'block';
+        startNewRound();
+    }
+
+    function startNewRound() {
+        document.querySelectorAll('.placed-weight').forEach(el => el.remove());
+        
+        targetLeft = weightOptions[Math.floor(Math.random() * weightOptions.length)];
+        targetRight = weightOptions[Math.floor(Math.random() * weightOptions.length)];
+        
+        currentLeft = 0;
+        currentRight = 0;
+
+        leftDisplay.textContent = targetLeft;
+        leftDisplay.className = 'weight-needed';
+        rightDisplay.textContent = targetRight;
+        rightDisplay.className = 'weight-needed';
+
+        nextButton.style.display = 'none';
+
+        // Формируем фразу для озвучки
+        let phrase = "";
+        if (targetLeft > 0) phrase += `С левой стороны ${targetLeft} грамм. `;
+        if (targetRight > 0) phrase += `С правой стороны ${targetRight} грамм.`;
+        if (targetLeft === 0 && targetRight === 0) phrase = "Колесо сбалансировано.";
+
+        // Запуск озвучки станка
+        speakSivik(phrase);
+    }
+
+    // Drag and Drop логика
+    let draggedWeightValue = null;
+
+    document.querySelectorAll('.weight-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedWeightValue = parseInt(e.target.getAttribute('data-weight'));
+        });
+    });
+
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+        zone.addEventListener('dragover', (e) => e.preventDefault());
+        zone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const side = zone.getAttribute('data-side');
+            
+            if (side === 'left') {
+                currentLeft += draggedWeightValue;
+                updateDisplay(leftDisplay, targetLeft, currentLeft);
+            } else {
+                currentRight += draggedWeightValue;
+                updateDisplay(rightDisplay, targetRight, currentRight);
+            }
+
+            const weightDiv = document.createElement('div');
+            weightDiv.className = 'placed-weight';
+            weightDiv.textContent = draggedWeightValue + 'г';
+            zone.appendChild(weightDiv);
+
+            checkWinCondition();
+        });
+    });
+
+    function updateDisplay(displayElement, target, current) {
+        let remaining = target - current;
+        if (remaining <= 0) {
+            displayElement.textContent = 'OK';
+            displayElement.classList.add('success');
+        } else {
+            displayElement.textContent = remaining;
+        }
+    }
+
